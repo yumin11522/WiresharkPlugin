@@ -31,25 +31,19 @@ do
     end
 
     -- 导出数据到文件部分
-    local version_str = string.match(_VERSION, "%d+[.]%d*")
-    local version_num = version_str and tonumber(version_str) or 5.1
-    -- lua>=5.4 直接使用位操作
-    -- 使用bit32进行位操作
-	if (version_num >= 5.4) then
-	   local function band(a,b)
-		  return(a&b)
-	   end
-	
-	   local function bor(a,b)
-		  return(a|b)
-	   end
-	
-	   local function lshift(a,b)
-		  return(a<<b)
-	   end
-	else
-	   local bit = (version_num >= 5.2) and require("bit32") or require("bit")
-	end
+    -- Wireshark provides global `bit` (Lua BitOp) on all versions, including Lua 5.4 (WS 4.4+).
+    local bit = bit
+    if bit == nil then
+        local ok, mod = pcall(require, "bit32")
+        if ok then bit = mod end
+    end
+    if bit == nil then
+        local ok, mod = pcall(require, "bit")
+        if ok then bit = mod end
+    end
+    if bit == nil then
+        error("rtp_amr_export: bit operations library not available")
+    end
 
     -- for geting data (the field's value is type of ByteArray)
     local f_data = Field.new("amr")

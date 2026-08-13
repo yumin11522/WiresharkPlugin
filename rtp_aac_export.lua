@@ -32,7 +32,7 @@ do
     function proto_aac.init()
         if (prefs.dyn_pt ~= old_dyn_pt) then
             -- reset old dissector
-            if (old_dyn_pt ~= nil and string.len(old_dyn_pt) > 0) then
+            if (old_dyn_pt ~= nil and string.len(tostring(old_dyn_pt)) > 0) then
                 local pt_numbers = getArray(tostring(old_dyn_pt))
                 for index,pt_number in pairs(pt_numbers) do
                     -- replace this proto with old proto on old payload type
@@ -46,7 +46,7 @@ do
             
             old_dyn_pt = prefs.dyn_pt  -- save current payload type's dissector
             
-            if (prefs.dyn_pt ~= nil and string.len(prefs.dyn_pt) > 0) then
+            if (prefs.dyn_pt ~= nil and string.len(tostring(prefs.dyn_pt)) > 0) then
                 local pt_numbers = getArray(tostring(prefs.dyn_pt))
                 old_dissector = {}
                 for index,pt_number in pairs(pt_numbers) do

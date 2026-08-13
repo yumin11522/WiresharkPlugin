@@ -5,25 +5,7 @@
 -- Author: Yang Xing (hongch_911@126.com)
 ------------------------------------------------------------------------------------------------
 do
-    local version_str = string.match(_VERSION, "%d+[.]%d*")
-    local version_num = version_str and tonumber(version_str) or 5.1
-    -- lua>=5.4 直接使用位操作
-	-- 使用bit32进行位操作
-	if (version_num >= 5.4) then
-	   local function band(a,b)
-		  return(a&b)
-	   end
-
-	   local function bor(a,b)
-		  return(a|b)
-	   end
-
-	   local function lshift(a,b)
-		  return(a<<b)
-	   end
-	else
-	   local bit = (version_num >= 5.2) and require("bit32") or require("bit")
-	end
+    -- No bitwise ops needed in this export script (kept load-order safe for WS 4.4+/Lua 5.4).
 
     function get_temp_path()
         local tmp = nil
@@ -57,8 +39,20 @@ do
         return tmp
     end
 
-    -- for geting ps data (the field's value is type of ByteArray)
-    local f_ps = Field.new("ps")
+    -- Field("ps") is registered by rtp_ps_assemble.lua / rtp_ps_no_assemble.lua.
+    -- Defer lookup: plugin load order is alphabetical, so this file may run before the PS dissector.
+    local f_ps = nil
+    local function ensure_ps_field()
+        if f_ps ~= nil then
+            return true
+        end
+        local ok, field = pcall(Field.new, "ps")
+        if ok and field then
+            f_ps = field
+            return true
+        end
+        return false
+    end
 
     local filter_string = nil
 
@@ -72,6 +66,12 @@ do
         function twappend(str)
             tw:append(str)
             tw:append("\n")
+        end
+
+        if not ensure_ps_field() then
+            twappend("Error: PS protocol not found.")
+            twappend("Load rtp_ps_assemble.lua or rtp_ps_no_assemble.lua into Personal Lua Plugins, then restart Wireshark.")
+            return
         end
         
         local ffmpeg_path = get_ffmpeg_path()

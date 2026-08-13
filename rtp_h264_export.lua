@@ -7,25 +7,21 @@
 -- Modify by Yang Xing (hongch_911@126.com)
 ------------------------------------------------------------------------------------------------
 do
-    local version_str = string.match(_VERSION, "%d+[.]%d*")
-    local version_num = version_str and tonumber(version_str) or 5.1
-    -- lua>=5.4 直接使用位操作
-	-- 使用bit32进行位操作
-	if (version_num >= 5.4) then
-	   local function band(a,b)
-		  return(a&b)
-	   end
-
-	   local function bor(a,b)
-		  return(a|b)
-	   end
-
-	   local function lshift(a,b)
-		  return(a<<b)
-	   end
-	else
-	   local bit = (version_num >= 5.2) and require("bit32") or require("bit")
-	end
+    -- Wireshark provides global `bit` (Lua BitOp) on all versions, including Lua 5.4 (WS 4.4+).
+    -- Do not require("bit32"): it is absent in Lua 5.4. Do not embed `&`/`|`/`<<` here: that
+    -- breaks parse on older Wireshark builds still using Lua 5.2.
+    local bit = bit
+    if bit == nil then
+        local ok, mod = pcall(require, "bit32")
+        if ok then bit = mod end
+    end
+    if bit == nil then
+        local ok, mod = pcall(require, "bit")
+        if ok then bit = mod end
+    end
+    if bit == nil then
+        error("rtp_h264_export: bit operations library not available")
+    end
 
     function string.starts(String,Start)
         return string.sub(String,1,string.len(Start))==Start
@@ -143,7 +139,7 @@ do
                 
                 if begin_with_nalu_hdr then
                     -- save SPS PPS
-                    local nalu_type = bit.band(str_bytes:byte(0,1), 0x1F)
+                    local nalu_type = bit.band(str_bytes:byte(1), 0x1F)
                     if not stream_info.sps and nalu_type == 7 then
                         stream_info.sps = str_bytes
                     elseif not stream_info.pps and nalu_type == 8 then
@@ -162,7 +158,7 @@ do
                 end
                 
                 if stream_info.counter2 == 0 then
-                    local nalu_type = bit.band(str_bytes:byte(0,1), 0x1F)
+                    local nalu_type = bit.band(str_bytes:byte(1), 0x1F)
                     if nalu_type ~= 7 then
                         -- write SPS and PPS to file header first
                         if stream_info.sps then

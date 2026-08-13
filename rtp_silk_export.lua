@@ -21,8 +21,8 @@ do
     -- 解析为SILK音频部分
     local proto_silk = Proto("silk", "Audio SILK")
 
-    -- Wireshark对每个相关数据包调用该函数
-    -- tvb:Testy Virtual Buffer报文缓存; pinfo:packet infomarmation报文信息; treeitem:解析树节点
+    -- Wireshark对每个相关数据包调用该函�?
+    -- tvb:Testy Virtual Buffer报文缓存; pinfo:packet infomarmation报文信息; treeitem:解析树节�?
     function proto_silk.dissector(tvb, pinfo, tree)
         -- add proto item to tree
         local proto_tree = tree:add(proto_silk, tvb())
@@ -46,7 +46,7 @@ do
     function proto_silk.init()
         if (prefs.dyn_pt ~= old_dyn_pt) then
             -- reset old dissector
-            if (old_dyn_pt ~= nil and string.len(old_dyn_pt) > 0) then
+            if (old_dyn_pt ~= nil and string.len(tostring(old_dyn_pt)) > 0) then
                 local pt_numbers = getArray(tostring(old_dyn_pt))
                 for index,pt_number in pairs(pt_numbers) do
                     -- replace this proto with old proto on old payload type
@@ -60,7 +60,7 @@ do
             
             old_dyn_pt = prefs.dyn_pt  -- save current payload type's dissector
             
-            if (prefs.dyn_pt ~= nil and string.len(prefs.dyn_pt) > 0) then
+            if (prefs.dyn_pt ~= nil and string.len(tostring(prefs.dyn_pt)) > 0) then
                 local pt_numbers = getArray(tostring(prefs.dyn_pt))
                 old_dissector = {}
                 for index,pt_number in pairs(pt_numbers) do
@@ -108,7 +108,7 @@ do
         return tmp
     end
 
-    -- 导出数据到文件部分
+    -- 导出数据到文件部�?
     -- for geting data (the field's value is type of ByteArray)
     local f_data = Field.new("silk")
 
